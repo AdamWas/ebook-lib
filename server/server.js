@@ -17,6 +17,7 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
+// add new book
 app.post('/books', authenticate, async (req, res) => {
   const book = new Book({
     title: req.body.title,
@@ -41,12 +42,90 @@ app.post('/books', authenticate, async (req, res) => {
   }
 });
 
+// list of user's books
 app.get('/books', authenticate, async (req, res) => {
   try {
     books = await Book.find({_creator: req.user._id});
     res.send({books});
   } catch (e) {
     res.status(400).send(e);
+  }
+});
+
+// get book by id
+app.get('/books/:id', authenticate, async (req, res) => {
+  var id = req.params.id;
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send()
+  }
+
+  const book = await Book.findOne({
+    _id: id,
+    _creator: req.user._id
+  });
+
+  try {
+    if (!book) {
+        return res.status(404).send();
+    }
+    res.send({book});
+  } catch (e) {
+    res.status(400).send();
+  }
+});
+
+// delete book by id
+app.delete('/books/:id', authenticate, async (req, res) => {
+  const id = req.params.id;
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send()
+  }
+  try {
+    const doc = await Book.findOneAndRemove({
+        _id: id,
+        _creator: req.user._id
+      })
+    if (!doc) {
+        return res.status(404).send();
+    }
+    res.send({doc});
+  } catch (e) {
+    res.status(400).send();
+  }
+});
+
+// update book by id
+app.patch('/books/:id', authenticate, async (req, res) => {
+  const id = req.params.id;
+  var body = _.pick(req.body, [
+    'title',
+    'orginalTitle',
+    'autors',
+    'path',
+    'rate',
+    'readed',
+    'description',
+    'notes',
+    'source'
+  ]);
+
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send()
+  }
+  try {
+    const modDate = moment().format()
+    const modDateObj = {modDate: modDate};
+    body = _.assign(body, modDateObj);
+    const book = await Book.findOneAndUpdate({
+          _id: id,
+          _creator: req.user._id
+    }, {$set: body}, {new: true});
+    if(!book){
+      return res.status(404).send();
+    }
+    res.send({book});
+  } catch (e) {
+    res.status(400).send();
   }
 });
 
