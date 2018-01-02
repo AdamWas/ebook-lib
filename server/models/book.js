@@ -57,6 +57,8 @@ var BookSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: true
   }
+}, {
+    usePushEach: true
 });
 
 var Book = mongoose.model('Book', BookSchema);

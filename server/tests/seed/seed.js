@@ -3,7 +3,7 @@ const env = require('./../../config/config');
 const {ObjectID} = require('mongodb');
 const jwt = require('jsonwebtoken');
 
-// const {Todo} = require('./../../models/todo');
+const {Book} = require('./../../models/book');
 const {User} = require('./../../models/user');
 
 const userOneId = new ObjectID();
@@ -33,24 +33,6 @@ const users = [{
   }]
 }]
 
-// const todos = [{
-//   _id: new ObjectID(),
-//   text: 'First test todo',
-//   _creator: userOneId
-// }, {
-//   _id: new ObjectID(),
-//   text: 'Second test todo',
-//   completed: true,
-//   completedAt: 333,
-//   _creator: userTwoId
-// }];
-//
-// const populateTodos = (done) => {
-//   Todo.remove({}).then(() => {
-//     return Todo.insertMany(todos);
-//   }).then(() => done());
-// };
-
 const populateUsers = (done) => {
   User.remove({}).then(() => {
     var userOne = new User(users[0]).save();
@@ -60,4 +42,22 @@ const populateUsers = (done) => {
   }).then(() => done());
 };
 
-module.exports = {users, populateUsers};
+const books = [{
+  _id: new ObjectID(),
+  title: 'First test book',
+  orginalTitle: 'First orginal title',
+  _creator: userOneId
+}, {
+  _id: new ObjectID(),
+  title: 'Second test book',
+  orginalTitle: 'Second orginal title',
+  _creator: userTwoId
+}];
+
+const populateBooks = (done) => {
+  Book.remove({}).then(() => {
+    return Book.insertMany(books);
+  }).then(() => done());
+};
+
+module.exports = {users, populateUsers, books, populateBooks};
