@@ -11,10 +11,14 @@ const {Author} = require('./models/author');
 const {User} = require('./models/user');
 const {authenticate} = require('./middleware/authenticate');
 
-const app = express();
+var app = express();
 const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
+
+app.get('/', (req, res) => {
+  res.send('hello')
+});
 
 // USER *******************************************
 
