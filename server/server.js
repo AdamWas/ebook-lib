@@ -4,6 +4,7 @@ const _ = require('lodash')
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
+const moment = require('moment');
 
 const {mongoose} = require('./db/mongoose');
 const {Book} = require('./models/book');
@@ -16,8 +17,37 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
-app.get('/', (req, res) => {
-  res.send('hello')
+app.post('/books', authenticate, async (req, res) => {
+  const book = new Book({
+    title: req.body.title,
+    orginalTitle: req.body.orginalTitle,
+    authors: req.body.authors,
+    path: req.body.path,
+    rate: req.body.rate,
+    readed: req.body.readed,
+    description: req.body.description,
+    notes: req.body.notes,
+    modDate: moment(),
+    source: req.body.source,
+    _creator: req.user._id
+  });
+
+  try {
+    const doc = await book.save();
+    res.send(doc);
+  } catch (e) {
+    res.status(400).send(e);
+    console.log(e);
+  }
+});
+
+app.get('/books', authenticate, async (req, res) => {
+  try {
+    books = await Book.find({_creator: req.user._id});
+    res.send({books});
+  } catch (e) {
+    res.status(400).send(e);
+  }
 });
 
 // USER *******************************************
@@ -45,7 +75,7 @@ app.post('/users/login', async (req, res) => {
     const token = await user.generateAuthToken();
     res.header('x-auth', token).send(user);
   } catch (e) {
-    res.status(400).send();
+    res.status(400).send(e);
   }
 });
 

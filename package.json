@@ -17,6 +17,7 @@
     "express": "^4.16.2",
     "jsonwebtoken": "^7.1.9",
     "lodash": "^4.17.4",
+    "moment": "^2.20.1",
     "mongodb": "^3.0.0-rc0",
     "validator": "^9.2.0"
   },
