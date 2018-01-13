@@ -22,10 +22,6 @@ var BookSchema = new mongoose.Schema({
   autors: [{
     authorId: mongoose.Schema.Types.ObjectId,
   }],
-  path: {
-    type: String,
-    trim: true
-  },
   rate: {
     type: Number
   },

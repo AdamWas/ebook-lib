@@ -11,19 +11,27 @@ const {Book} = require('./models/book');
 const {Author} = require('./models/author');
 const {User} = require('./models/user');
 const {authenticate} = require('./middleware/authenticate');
+const {sendToDbx} = require('./utils/upload');
 
-var app = express();
+let app = express();
 const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
 // add new book
 app.post('/books', authenticate, async (req, res) => {
+  // let filesObj = _.pick(req.body, [
+  //   'files'
+  // ]);
+  // let files = _.map(filesObj, 'files');
+  // let uploadedFiles = files.map(
+  //   (file) => sendToDbx(file.file, file.name, file.extension)
+  // );
+
   const book = new Book({
     title: req.body.title,
     orginalTitle: req.body.orginalTitle,
     authors: req.body.authors,
-    path: req.body.path,
     rate: req.body.rate,
     readed: req.body.readed,
     description: req.body.description,
@@ -53,7 +61,7 @@ app.get('/books', authenticate, async (req, res) => {
 
 // get book by id
 app.get('/books/:id', authenticate, async (req, res) => {
-  var id = req.params.id;
+  let id = req.params.id;
   if (!ObjectID.isValid(id)) {
     return res.status(404).send()
   }
@@ -96,17 +104,20 @@ app.delete('/books/:id', authenticate, async (req, res) => {
 // update book by id
 app.patch('/books/:id', authenticate, async (req, res) => {
   const id = req.params.id;
-  var body = _.pick(req.body, [
+  let body = _.pick(req.body, [
     'title',
     'orginalTitle',
     'autors',
-    'path',
     'rate',
     'readed',
     'description',
     'notes',
     'source'
   ]);
+  // let filesObj = _.pick(req.body, [
+  //   'files'
+  // ]);
+  // let files = _.map(filesObj, 'files');
 
   if (!ObjectID.isValid(id)) {
     return res.status(404).send()
@@ -119,10 +130,104 @@ app.patch('/books/:id', authenticate, async (req, res) => {
           _id: id,
           _creator: req.user._id
     }, {$set: body}, {new: true});
+    // let uploadedFiles = files.map(
+    //   (file) => sendToDbx(file.file, file.name, file.extension)
+    // );
     if(!book){
       return res.status(404).send();
     }
     res.send({book});
+  } catch (e) {
+    res.status(400).send();
+  }
+});
+
+// AUTHOR *****************************************
+
+app.post('/author', authenticate, async (req, res) => {
+  const author = new Author({
+    firstNames: req.body.firstNames,
+    names: req.body.names,
+    addDate: moment(),
+    _creator: req.user._id
+  });
+
+  try {
+    const doc = await author.save();
+    res.send(doc);
+  } catch (e) {
+    res.status(400).send();
+  }
+});
+
+app.get('/author', authenticate, async (req, res) => {
+  try {
+    authors = await Author.find({_creator: req.user._id});
+    res.send({authors});
+  } catch (e) {
+    res.status(400).send(e);
+  };
+});
+
+app.get('/author/:id', authenticate, async (req, res) => {
+  let id = req.params.id;
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send()
+  }
+
+  const author = await Author.findOne({
+    _id: id,
+    _creator: req.user._id
+  });
+
+  try {
+    if (!author) {
+        return res.status(404).send();
+    }
+    res.send({author});
+  } catch (e) {
+    res.status(400).send();
+  }
+});
+
+app.delete('/author/:id', authenticate, async (req, res) => {
+  const id = req.params.id;
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send()
+  }
+  try {
+    const doc = await Author.findOneAndRemove({
+        _id: id,
+        _creator: req.user._id
+      })
+    if (!doc) {
+        return res.status(404).send();
+    }
+    res.send({doc});
+  } catch (e) {
+    res.status(400).send();
+  }
+});
+
+app.patch('/author/:id', authenticate, async (req, res) => {
+  const id = req.params.id;
+  let body = _.pick(req.body, [
+    'firstNames',
+    'names'
+  ]);
+
+  if (!ObjectID.isValid(id)) {
+    return res.status(404).send()
+  }
+  try {
+    const author = await Author.findOneAndUpdate({
+          _id: id,
+          _creator: req.user._id
+    }, {$set: body}, {new: true});
+    if(!author){
+      return res.status(404).send();
+    }
+    res.send({author});
   } catch (e) {
     res.status(400).send();
   }
