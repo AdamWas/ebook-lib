@@ -6,13 +6,16 @@ var bodyParser = require('body-parser');
 const {app} = require('./../server');
 const {Book} = require('./../models/book');
 const {User} = require('./../models/user');
-const {users, populateUsers, books, populateBooks} = require('./seed/seed')
+const {Author} = require('./../models/author');
+const {users, populateUsers, books, populateBooks, authors,
+                  pupulateAuthors} = require('./seed/seed')
 
 
 app.use(bodyParser.json());
 
 beforeEach(populateUsers);
 beforeEach(populateBooks);
+beforeEach(pupulateAuthors);
 
 describe('****BOOKS****', () => {
   describe('POST /books', () => {
@@ -110,7 +113,7 @@ describe('****BOOKS****', () => {
       });
     });
 
-    describe('UPDATE /todos/:id', () => {
+    describe('UPDATE /books/:id', () => {
         it('should update the book', (done) => {
           var hexId = books[0]._id.toHexString();
           var title = 'This should be the new text';
@@ -269,4 +272,119 @@ describe('****USER****', () => {
       });
     });
   });
+});
+
+describe('****AUTHORS****', () => {
+  describe('POST /author', () => {
+    it('should create a new author', (done) => {
+    const author = {
+      firstNames: 'Test book title',
+      names: 'Orginal title',
+      _creator: users[0]._id
+    };
+    request(app)
+    .post('/author')
+    .set('x-auth', users[0].tokens[0].token)
+    .send(author)
+    .expect(200)
+    .end((err, res) => {
+    if(err) {
+          return done();
+        }
+        Author.find(author).then((authors) => {
+          expect(authors.length).toBe(1);
+          expect(authors[0].firstNames).toBe(author.firstNames);
+          expect(authors[0].names).toBe(author.names);
+          expect(authors[0]._creator).toEqual(author._creator);
+          done();
+        }).catch((e) => done());
+      });
+    });
+
+    it('should not create author with invalid data', (done) => {
+      request(app)
+      .post('/author')
+      .set('x-auth', users[0].tokens[0].token)
+      .send({})
+      .expect(400)
+      .end((err, res) => {
+        if(err) {
+          return done();
+        }
+        Author.find().then((authors) => {
+          expect(authors.length).toBe(2);
+          done();
+        }).catch((e) => done());
+      });
+    });
+  });
+
+  describe('GET /author', () => {
+    it('should get all authors', (done) => {
+      request(app)
+      .get('/author')
+      .set('x-auth', users[0].tokens[0].token)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.authors.length).toBe(1);
+      })
+      .end(done)
+    });
+  });
+
+  describe('GET /author/:id', () => {
+    it('should return author by id', (done) => {
+      request(app)
+      .get(`/author/${authors[0]._id.toHexString()}`)
+      .set('x-auth', users[0].tokens[0].token)
+      .expect(200)
+      .expect((res) => {
+        expect(res.body.author.firstNames).toBe(authors[0].firstNames);
+      })
+      .end(done);
+    });
+
+      it('should not return author from other user', (done) => {
+        request(app)
+        .get(`/author/${authors[1]._id.toHexString()}`)
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(404)
+        .end(done);
+      });
+
+      it('should return 404 if author not found', (done) => {
+        var hexId = new ObjectID().toHexString();
+        request(app)
+        .get(`/author/${hexId}`)
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(404)
+        .end(done);
+      });
+
+      it('should return 404 for non-obj ID', (done) => {
+        request(app)
+        .get(`/author/123`)
+        .set('x-auth', users[0].tokens[0].token)
+        .expect(404)
+        .end(done);
+      });
+    });
+
+    describe('UPDATE /author/:id', () => {
+        it('should update the author', (done) => {
+          var hexId = authors[0]._id.toHexString();
+          var firstNames = 'This should be the new text';
+          request(app)
+          .patch(`/author/${hexId}`)
+          .set('x-auth', users[0].tokens[0].token)
+          .send({
+            firstNames
+          })
+          .expect(200)
+          .expect((res) => {
+            expect(res.body.author.firstNames).toBe(firstNames);
+          })
+          .end(done)
+        });
+    });
 });

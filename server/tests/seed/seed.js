@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const {Book} = require('./../../models/book');
 const {User} = require('./../../models/user');
+const {Author} = require('./../../models/author');
 
 const userOneId = new ObjectID();
 const userTwoId = new ObjectID();
@@ -60,4 +61,23 @@ const populateBooks = (done) => {
   }).then(() => done());
 };
 
-module.exports = {users, populateUsers, books, populateBooks};
+const authors = [{
+  _id: new ObjectID(),
+  firstNames: 'John R. R.',
+  names: 'Tolkien',
+  _creator: userOneId
+}, {
+  _id: new ObjectID(),
+  firstNames: 'Robert',
+  names: 'Wegner',
+  _creator: userTwoId
+}];
+
+const pupulateAuthors = (done) => {
+  Author.remove({}).then(() => {
+    return Author.insertMany(authors);
+  }).then(() => done());
+};
+
+module.exports = {users, populateUsers, books, populateBooks, authors,
+                  pupulateAuthors};
